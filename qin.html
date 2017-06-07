@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>websocket_TEST</title>
+</head>
+<body>
+<textarea class="log" style="width: 100%; height: 500px;">
+=======websocket======
+</textarea>
+我的姓名：<input type="text" id="name" value=""/>
+<input type="button" id="connect" value="连接" onClick="link()">
+<input type="button" id="disconnect" value="断开" onClick="dis()"><br>
+
+<div style="display:none;" class="content">
+    收件人：<input type="text" id="to" value=""><br>
+    消息内容：<input type="text" id="msg" value="">
+    <input type="button" value="发送" onClick="send()">
+</div>
+<script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
+<script>
+    $('#disconnect').hide();
+
+
+    var sum = 0; //心跳检测次数
+    var disconnect = false;//手段断开
+    function link() {
+        var url = 'ws://192.168.1.177:9901/WebSocket_demo/Controller.php';
+        socket = new WebSocket(url);
+        socket.onopen = function () {
+            $(".content").show();
+            $('#connect').hide();
+            $('#disconnect').show();
+            name = $('#name').val();
+            body = '{"username": "'+name+'","order":"login"}';
+
+            socket.send(body);
+            setInterval('heartTest(socket)', 200);
+        };
+
+        socket.onmessage = function (msg) {
+            log(msg.data);
+            console.log(msg);
+        };
+        socket.onclose = function () {
+            log('断开连接');
+            $('#connect').show();
+            $('#disconnect').hide();
+        }
+
+        socket.onerror = function () {
+        }
+    }
+
+    function heartTest(socket)
+    {
+        name = $('#name').val();
+        msg = "heartTest";
+        to  = "server#a^vfseJe";
+        body = '{"username": "' + name + '","to":"'+to+'","order":"send","msg":"' + msg + '"}';
+
+        sum++;
+        if (sum >100) {
+            setTimeout(function(){sum = 0;}, 10000);
+        } else {
+            socket.send(body);
+        }
+
+    }
+
+    function dis() {
+        $(".content").hide();
+        disconnect = true;
+        socket.close();
+        socket = null;
+    }
+    function log(var1) {
+        $('.log').append(var1 + "\r\n");
+    }
+
+    function send() {
+        name = $('#name').val();
+        to = $('#to').val();
+        msg = $('#msg').val();
+        body = '{"username": "' + name + '","to":"' + to + '","order":"send","msg":"' + msg + '"}';
+
+        socket.send(body);
+    }
+</script>
+</body>
+</html>
